@@ -1,8 +1,10 @@
-﻿; Recommended for performance and compatibility with future AutoHotkey releases.
+; ===== Standard AHK ==================================================================================================
+
+; Recommended for performance and compatibility with future AutoHotkey releases.
 #NoEnv
 
 ; Enable warnings to assist with detecting common errors.
-;#Warn
+#Warn
 
 ; Recommended for new scripts due to its superior speed and reliability.
 SendMode Input
@@ -10,88 +12,125 @@ SendMode Input
 ; Ensures a consistent starting directory.
 SetWorkingDir %A_ScriptDir%
 
-; Format the current date and time into different formats
-FormatTime, exampleMMddyydddcurrentDateTime,, MM/dd/yy ddd
-FormatTime, exampleMMddyycurrentDateTime,, MM/dd/yy
-FormatTime, exampleMMddyyyycurrentDateTime,, MM/dd/yyyy
+; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 
-; GUI Creation
+IniFileName := A_ScriptName ".ini"
+if !FileExist(IniFileName) ; Check if the .ini file does not exist
+{
+	IniWrite, "", %IniFileName%, Settings, Initials
+	IniWrite, MM/dd/yy ddd, %IniFileName%, Settings, DateTimeFormat ; Set default date-time format
+}
+
+IniRead, vInitials, %IniFileName%, Settings, Initials
+IniRead, vDateTimeFormat, %IniFileName%, Settings, DateTimeFormat
+
+; ===== Setup ==================================================================================================
+
+; Tray Menu
+Menu, Tray, NoStandard
+Menu, Tray, Add, Show GUI, GoToShowGUI
+Menu, Tray, Add, Exit, TrayExit
+
+; ===== GUI Creation ==================================================================================================
+
+; Margin and Font
 Gui, Margin, 10, 10
 Gui, Font, s10, Arial3
 
 ; Add usage instructions
-Gui, Add, Text, , Usage Instructions:
-Gui, Add, Text, , 1. Enter your initials in the "Initials" field
-Gui, Add, Text, , 2. Select the desired date and time format from the radio buttons
-Gui, Add, Text, , 3. Use the hotkey "Ctrl + d" to send the current date and time along with your initials.
+Gui, Add, Text, w300, Use the hotkey "Ctrl + d" to send the current date and time along with your initials.
 
-;Add Initial Setup
-Gui, Add, Text, , Initials:
-Gui, Add, Edit, vInitials, []
+; Add Initial Setup
+Gui, Add, Text, w300 gEditInitials vCurrentInitials, Initials: %vInitials%
 
+; Add Initial Setup
+Gui, Add, Text, w300 gEditDateTimeFormat vCurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat%
 
-; Add three radio buttons with different date and time formats as their label
-Gui, Add, Radio, altsubmit gCheck vradioGroup, %exampleMMddyydddcurrentDateTime%
-Gui, Add, Radio, altsubmit gCheck, %exampleMMddyycurrentDateTime%
-Gui, Add, Radio, altsubmit gCheck, %exampleMMddyyyycurrentDateTime%
+; Add Edit Initials button
+Gui, Add, Button, w300 gEditInitials, Edit Initials
 
+; Add Edit DateTimeFormat button
+Gui, Add, Button, w300 gEditDateTimeFormat, Edit Datetime Format
+
+; Add Hide to Tray button
+Gui, Add, Button, w300 gHideToTray, Hide to Tray
+
+; Add help button
+Gui, Add, Button, w300 gShowHelp, Help
 
 ; Show the GUI
 Gui, Show
 Return
 
+; ===== Called from Main GUI ==================================================================================================
+
+; Show help dialog when requested
+ShowHelp:
+	MsgBox Usage Instructions:`n`n1. Use the Edit Initials Button to set your initials.`n2. Use the hotkey "Ctrl + d" to send the current date and time along with your initials.
+	Return
+
+; Minimize to tray function
+HideToTray:
+	WinHide, A
+	return
+	
 ; Exit the script when the GUI is closed
 GuiClose:
-ExitApp
+	ExitApp
+	Return
 
-; Check function triggered by selecting a radio button
-Check:
-GuiControlGet, vInitials, , Edit1
-Gui, Submit, NoHide
-;MsgBox, radioGroup = %radioGroup%
-;MsgBox, radioGroup = %vInitials%
+; Edit Initials function
+EditInitials:
+    Gui, Submit, NoHide
+    InputBox, editedInitials, Edit Initials, Enter your initials:, , , , , %vInitials%
+    if (editedInitials <> "")
+    {
+        editedInitials := Trim(editedInitials)
+        StringUpper, editedInitials, editedInitials ; Convert to uppercase using StringUpper
+        editedInitials := "[" . editedInitials . "]" ; Surround with square brackets
+        vInitials := editedInitials
+        IniWrite, %vInitials%, %IniFileName%, Settings, Initials
+        GuiControl, Text, CurrentInitials, Initials: %vInitials% ; Update the GUI label with the new initials
+    }
+    return
+	
+; Edit DateTimeFormat function
+EditDateTimeFormat:
+    Gui, Submit, NoHide
+    InputBox, editedDateTimeFormat, Edit DateTimeFormat, Enter your Date Time Format:, , , , , %vDateTimeFormat%
+    if (editedDateTimeFormat <> "")
+    {
+        editedDateTimeFormat := Trim(editedDateTimeFormat)
+        vDateTimeFormat := editedDateTimeFormat
+        IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
+        GuiControl, Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
+    }
+    return
+	
+	
+; ===== Called from Tray ==================================================================================================
 
+; Show GUI from tray function
+GoToShowGUI:
+	Gui, Show
+	return
+
+; Tray Exit
+TrayExit:
+	ExitApp
+	return
+		
+; ===== Hotkey Pressed ==================================================================================================
 
 ; Hotkey for sending the current date and time
 ^d::
 
-; If the first radio button is selected
-if (radioGroup = 1){
-
-FormatTime, currentDateTime,, MM/dd/yy ddd
-SendInput %currentDateTime%
-SendInput {Space}
-Send, %vInitials%:
-SendInput {Space}
-
-; MsgBox, radioGroup = %radioGroup%
-}
-
-; If the second radio button is selected
-if (radioGroup = 2){
-
-FormatTime, currentDateTime,, MM/dd/yy
-SendInput %currentDateTime%
-SendInput {Space}
-Send, %vInitials%:
-SendInput {Space}
-
-; MsgBox, radioGroup = %radioGroup%
-}
-
-; If the third radio button is selected
-if (radioGroup = 3){
-
-FormatTime, currentDateTime,, MM/dd/yyyy
-SendInput %currentDateTime%
-SendInput {Space}
-Send, %vInitials%:
-SendInput {Space}
-
-; MsgBox, radioGroup = %radioGroup%
-}
-
-;MsgBox, radioGroup = %radioGroup%
-;MsgBox, vradioGroup = %vradioGroup%
-
+	; Format the current date and time using the selected format
+	FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
+	
+	; Send the formatted date and time
+	SendInput %vCurrentDateTimeFormat%
+	SendInput {Space}
+	Send, %vInitials%:
+	SendInput {Space}
 Return
