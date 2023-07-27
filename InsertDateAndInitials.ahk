@@ -83,6 +83,9 @@ GuiClose:
 EditInitials:
     Gui, Submit, NoHide
     InputBox, editedInitials, Edit Initials, Enter your initials:, , , , , %vInitials%
+	if (ErrorLevel) ; Check if the user pressed the Cancel button
+        return ; If canceled, do nothing
+		
     if (editedInitials <> "")
     {
         editedInitials := Trim(editedInitials)
@@ -98,6 +101,9 @@ EditInitials:
 EditDateTimeFormat:
     Gui, Submit, NoHide
     InputBox, editedDateTimeFormat, Edit DateTimeFormat, Enter your Date Time Format:, , , , , %vDateTimeFormat%
+	if (ErrorLevel) ; Check if the user pressed the Cancel button
+        return ; If canceled, do nothing
+		
     if (editedDateTimeFormat <> "")
     {
         editedDateTimeFormat := Trim(editedDateTimeFormat)
