@@ -58,6 +58,9 @@ Gui, Add, Button, w300 gHideToTray, Hide to Tray
 ; Add help button
 Gui, Add, Button, w300 gShowHelp, Help
 
+; Add help button
+Gui, Add, Button, w300 gResettoDefault, Reset to Default
+
 ; Show the GUI
 Gui, Show
 Return
@@ -112,6 +115,19 @@ EditDateTimeFormat:
         GuiControl, Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
     }
     return
+
+; Reset Initials and DateTimeFormat to default values. 
+ResettoDefault:
+	;Reset DateTimeFormat
+	vDateTimeFormat := "MM/dd/yy ddd"
+	IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
+    GuiControl, Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
+	
+	;Reset Initials
+	vInitials := "[]"
+    IniWrite, %vInitials%, %IniFileName%, Settings, Initials
+    GuiControl, Text, CurrentInitials, Initials: %vInitials% ; Update the GUI label with the new initials	
+	return
 	
 	
 ; ===== Called from Tray ==================================================================================================
