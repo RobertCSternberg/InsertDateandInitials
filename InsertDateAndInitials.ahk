@@ -14,7 +14,7 @@ SetWorkingDir %A_ScriptDir%
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 
-IniFileName := A_ScriptName ".ini"
+IniFileName := "Settings_InsertDateAndInitials.ini"
 if !FileExist(IniFileName) ; Check if the .ini file does not exist
 {
 	IniWrite, "", %IniFileName%, Settings, Initials
