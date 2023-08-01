@@ -122,7 +122,7 @@ HideToTray:
 	
 ; Exit the script when the GUI is closed
 GuiClose:
-	ExitApp
+	GoSub, ConfirmExitApp
 	Return
 
 ; Edit Initials function
@@ -166,6 +166,16 @@ ConfirmResetToDefault:
     {
         ; The user clicked Yes, so proceed with resetting to default
         GoSub, ResettoDefault
+    }
+    return
+	
+; Confirm Exit
+ConfirmExitApp:
+    MsgBox, 4, Quit?, Are you sure you want to quit the application? `n `nInstead consider hiding to the system tray. This action can be preformed on the main menu with Hide to Tray and will allow you to continue using the hotkey Ctrl+D.
+    IfMsgBox, Yes
+    {
+        ; The user clicked Yes, so proceed to ExitApp
+        ExitApp
     }
     return
 
