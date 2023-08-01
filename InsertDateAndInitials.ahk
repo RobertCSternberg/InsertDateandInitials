@@ -149,7 +149,6 @@ EditDateTimeFormat:
     Gui, FormatPicker:Add, Button, w200 gSelectFormat1, 01/01/01 Mon
     Gui, FormatPicker:Add, Button, w200 gSelectFormat2, 01/01/2001
     Gui, FormatPicker:Add, Button, w200 gSelectFormat3, 01/01/01 Monday
-    ; Add more buttons as needed for other DateTime formats...
     Gui, FormatPicker:Add, Button, w100 gCancelFormat, Cancel
     Gui, FormatPicker:Show, , Pick a DateTime Format
     return
