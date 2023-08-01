@@ -60,7 +60,7 @@ Gui, Add, Button, w300 gHideToTray, Hide to Tray
 Gui, Add, Button, w300 gShowHelp, Help
 
 ; Add help button
-Gui, Add, Button, w300 gResettoDefault, Reset to Default
+Gui, Add, Button, w300 gConfirmResettoDefault, Reset to Default
 
 ; Show the GUI
 Gui, Show
@@ -114,6 +114,16 @@ EditDateTimeFormat:
         vDateTimeFormat := editedDateTimeFormat
         IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
         GuiControl, Text, CurrentDateTimeFormat, Current Date Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
+    }
+    return
+
+; Confirm Reset to Default
+ConfirmResetToDefault:
+    MsgBox, 4, Reset to Default, Are you sure you want to reset the settings to default? This action cannot be undone.
+    IfMsgBox, Yes
+    {
+        ; The user clicked Yes, so proceed with resetting to default
+        GoSub, ResettoDefault
     }
     return
 
