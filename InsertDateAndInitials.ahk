@@ -13,7 +13,7 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 ; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.0.0" ; Replace with your current version
+compiledGitTag := "v1.0.1" ; Replace with your current version
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
@@ -43,11 +43,20 @@ Gui, Font, s10, Arial3
 ; Add usage instructions
 Gui, Add, Text, w300, Use the hotkey "Ctrl + d" to send the current date along with your initials.
 
-; Add Initial Setup
+; Add Current Initials
 Gui, Add, Text, w300 gEditInitials vCurrentInitials, Initials: %vInitials%
 
-; Add Initial Setup
+; Add Current Date Format
 Gui, Add, Text, w300 gEditDateTimeFormat vCurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat%
+
+; Add Section
+Gui, Add, Text, w300 Center, ________________________________________
+
+; Add Spacing
+Gui, Add, Text, w300 h10 ,
+
+; Add Section
+Gui, Add, Text, w300 Center, --- General Setup / Hide to Tray ---
 
 ; Add Edit Initials button
 Gui, Add, Button, w300 gEditInitials, Edit Initials
@@ -57,6 +66,12 @@ Gui, Add, Button, w300 gEditDateTimeFormat, Edit Date Format
 
 ; Add Hide to Tray button
 Gui, Add, Button, w300 gHideToTray, Hide to Tray
+
+; Add Spacing
+Gui, Add, Text, w300 ,
+
+; Add Section
+Gui, Add, Text, w300 Center, --- Settings / Help ---
 
 ; Add Check for Updates button
 Gui, Add, Button, w300 gCheckforUpdates, Check for Updates
