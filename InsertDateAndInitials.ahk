@@ -145,19 +145,41 @@ EditInitials:
 	
 ; Edit DateTimeFormat function
 EditDateTimeFormat:
-    Gui,Main: Submit, NoHide
-    InputBox, editedDateTimeFormat, Edit DateTimeFormat, Enter your Date Format:, , , , , %vDateTimeFormat%
-	if (ErrorLevel) ; Check if the user pressed the Cancel button
-        return ; If canceled, do nothing
-		
-    if (editedDateTimeFormat <> "")
-    {
-        editedDateTimeFormat := Trim(editedDateTimeFormat)
-        vDateTimeFormat := editedDateTimeFormat
-        IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
-        GuiControl, Text, CurrentDateTimeFormat, Current Date Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
-    }
+    Gui, FormatPicker:New, -SysMenu
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat1, 01/01/01 Mon
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat2, 01/01/2001
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat3, 01/01/01 Monday
+    ; Add more buttons as needed for other DateTime formats...
+    Gui, FormatPicker:Add, Button, w100 gCancelFormat, Cancel
+    Gui, FormatPicker:Show, , Pick a DateTime Format
     return
+
+SelectFormat1:
+    UpdateDateTimeFormat("MM/dd/yy ddd")
+    return
+
+SelectFormat2:
+    UpdateDateTimeFormat("MM/dd/yyyy")
+    return
+
+SelectFormat3:
+    UpdateDateTimeFormat("MM/dd/yyyy dddd")
+    return
+
+CancelFormat:
+    Gui, FormatPicker:Destroy
+    return
+
+UpdateDateTimeFormat(newFormat)
+{
+    global vDateTimeFormat
+    global IniFileName
+    vDateTimeFormat := newFormat
+    IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
+    GuiControl, Main: Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the main GUI label with the new DateTimeFormat
+    Gui, FormatPicker:Destroy
+}
+
 
 ; Confirm Reset to Default
 ConfirmResetToDefault:
