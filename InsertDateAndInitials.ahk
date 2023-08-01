@@ -28,6 +28,7 @@ IniRead, vDateTimeFormat, %IniFileName%, Settings, DateTimeFormat
 
 ; Tray Menu
 Menu, Tray, NoStandard
+Menu, Tray, Default, GoToShowGUI
 Menu, Tray, Add, Show GUI, GoToShowGUI
 Menu, Tray, Add, Exit, TrayExit
 
