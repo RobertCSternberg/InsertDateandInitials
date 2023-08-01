@@ -38,7 +38,7 @@ Gui, Margin, 10, 10
 Gui, Font, s10, Arial3
 
 ; Add usage instructions
-Gui, Add, Text, w300, Use the hotkey "Ctrl + d" to send the current date and time along with your initials.
+Gui, Add, Text, w300, Use the hotkey "Ctrl + d" to send the current date along with your initials.
 
 ; Add Initial Setup
 Gui, Add, Text, w300 gEditInitials vCurrentInitials, Initials: %vInitials%
@@ -49,8 +49,8 @@ Gui, Add, Text, w300 gEditDateTimeFormat vCurrentDateTimeFormat, Current Date Ti
 ; Add Edit Initials button
 Gui, Add, Button, w300 gEditInitials, Edit Initials
 
-; Add Edit DateTimeFormat button
-Gui, Add, Button, w300 gEditDateTimeFormat, Edit Datetime Format
+; Add Edit Date Format button
+Gui, Add, Button, w300 gEditDateTimeFormat, Edit Date Format
 
 ; Add Hide to Tray button
 Gui, Add, Button, w300 gHideToTray, Hide to Tray
@@ -103,7 +103,7 @@ EditInitials:
 ; Edit DateTimeFormat function
 EditDateTimeFormat:
     Gui, Submit, NoHide
-    InputBox, editedDateTimeFormat, Edit DateTimeFormat, Enter your Date Time Format:, , , , , %vDateTimeFormat%
+    InputBox, editedDateTimeFormat, Edit DateTimeFormat, Enter your Date Format:, , , , , %vDateTimeFormat%
 	if (ErrorLevel) ; Check if the user pressed the Cancel button
         return ; If canceled, do nothing
 		
@@ -112,7 +112,7 @@ EditDateTimeFormat:
         editedDateTimeFormat := Trim(editedDateTimeFormat)
         vDateTimeFormat := editedDateTimeFormat
         IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
-        GuiControl, Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
+        GuiControl, Text, CurrentDateTimeFormat, Current Date Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
     }
     return
 
