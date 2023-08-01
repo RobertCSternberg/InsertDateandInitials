@@ -118,7 +118,7 @@ EditDateTimeFormat:
     return
 
 ; Confirm Reset to Default
-	ConfirmResetToDefault:
+ConfirmResetToDefault:
     MsgBox, 4, Reset to Default, Are you sure you want to reset the settings to default? This action cannot be undone.
     IfMsgBox, Yes
     {
