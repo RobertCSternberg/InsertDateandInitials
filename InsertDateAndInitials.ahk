@@ -37,56 +37,56 @@ Menu, Tray, Default, Show GUI
 ; ===== GUI Creation ==================================================================================================
 
 ; Margin and Font
-Gui, Margin, 10, 10
-Gui, Font, s10, Arial3
+Gui,Main: Margin, 10, 10
+Gui,Main: Font, s10, Arial3
 
 ; Add usage instructions
-Gui, Add, Text, w300, Use the hotkey "Ctrl + d" to send the current date along with your initials.
+Gui,Main: Add, Text, w300, Use the hotkey "Ctrl + d" to send the current date along with your initials.
 
 ; Add Current Initials
-Gui, Add, Text, w300 gEditInitials vCurrentInitials, Initials: %vInitials%
+Gui,Main: Add, Text, w300 gEditInitials vCurrentInitials, Initials: %vInitials%
 
 ; Add Current Date Format
-Gui, Add, Text, w300 gEditDateTimeFormat vCurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat%
+Gui,Main: Add, Text, w300 gEditDateTimeFormat vCurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat%
 
 ; Add Section
-Gui, Add, Text, w300 Center, ________________________________________
+Gui,Main: Add, Text, w300 Center, ________________________________________
 
 ; Add Spacing
-Gui, Add, Text, w300 h10 ,
+Gui,Main: Add, Text, w300 h10 ,
 
 ; Add Section
-Gui, Add, Text, w300 Center, --- General Setup / Hide to Tray ---
+Gui,Main: Add, Text, w300 Center, --- General Setup / Hide to Tray ---
 
 ; Add Edit Initials button
-Gui, Add, Button, w300 gEditInitials, Edit Initials
+Gui,Main: Add, Button, w300 gEditInitials, Edit Initials
 
 ; Add Edit Date Format button
-Gui, Add, Button, w300 gEditDateTimeFormat, Edit Date Format
+Gui,Main: Add, Button, w300 gEditDateTimeFormat, Edit Date Format
 
 ; Add Hide to Tray button
-Gui, Add, Button, w300 gHideToTray, Hide to Tray
+Gui,Main: Add, Button, w300 gHideToTray, Hide to Tray
 
 ; Add Spacing
-Gui, Add, Text, w300 ,
+Gui,Main: Add, Text, w300 ,
 
 ; Add Section
-Gui, Add, Text, w300 Center, --- Settings / Help ---
+Gui,Main: Add, Text, w300 Center, --- Settings / Help ---
 
 ; Add Check for Updates button
-Gui, Add, Button, w300 gCheckforUpdates, Check for Updates
+Gui,Main: Add, Button, w300 gCheckforUpdates, Check for Updates
 
 ; Add Reset button
-Gui, Add, Button, w300 gConfirmResettoDefault, Reset to Default
+Gui,Main: Add, Button, w300 gConfirmResettoDefault, Reset to Default
 
 ; Add Help button
-Gui, Add, Button, w300 gShowHelp, Help
+Gui,Main: Add, Button, w300 gShowHelp, Help
 
 ; Add Version Information
-Gui, Add, Text, w300 Right, %compiledGitTag%
+Gui,Main: Add, Text, w300 Right, %compiledGitTag%
 
 ; Show the GUI
-Gui, Show
+Gui,Main: Show
 Return
 
 ; ===== Called from Main GUI ==================================================================================================
@@ -121,13 +121,13 @@ HideToTray:
 	return
 	
 ; Exit the script when the GUI is closed
-GuiClose:
+MainGuiClose:
 	GoSub, ConfirmExitApp
 	Return
 
 ; Edit Initials function
 EditInitials:
-    Gui, Submit, NoHide
+    Gui,Main: Submit, NoHide
     InputBox, editedInitials, Edit Initials, Enter your initials:, , , , , %vInitials%
 	if (ErrorLevel) ; Check if the user pressed the Cancel button
         return ; If canceled, do nothing
@@ -145,19 +145,40 @@ EditInitials:
 	
 ; Edit DateTimeFormat function
 EditDateTimeFormat:
-    Gui, Submit, NoHide
-    InputBox, editedDateTimeFormat, Edit DateTimeFormat, Enter your Date Format:, , , , , %vDateTimeFormat%
-	if (ErrorLevel) ; Check if the user pressed the Cancel button
-        return ; If canceled, do nothing
-		
-    if (editedDateTimeFormat <> "")
-    {
-        editedDateTimeFormat := Trim(editedDateTimeFormat)
-        vDateTimeFormat := editedDateTimeFormat
-        IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
-        GuiControl, Text, CurrentDateTimeFormat, Current Date Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
-    }
+    Gui, FormatPicker:New, -SysMenu
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat1, 01/01/01 Mon
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat2, 01/01/2001
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat3, 01/01/01 Monday
+    Gui, FormatPicker:Add, Button, w100 gCancelFormat, Cancel
+    Gui, FormatPicker:Show, , Pick a DateTime Format
     return
+
+SelectFormat1:
+    UpdateDateTimeFormat("MM/dd/yy ddd")
+    return
+
+SelectFormat2:
+    UpdateDateTimeFormat("MM/dd/yyyy")
+    return
+
+SelectFormat3:
+    UpdateDateTimeFormat("MM/dd/yyyy dddd")
+    return
+
+CancelFormat:
+    Gui, FormatPicker:Destroy
+    return
+
+UpdateDateTimeFormat(newFormat)
+{
+    global vDateTimeFormat
+    global IniFileName
+    vDateTimeFormat := newFormat
+    IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
+    GuiControl, Main: Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the main GUI label with the new DateTimeFormat
+    Gui, FormatPicker:Destroy
+}
+
 
 ; Confirm Reset to Default
 ConfirmResetToDefault:
@@ -230,7 +251,7 @@ GetLatestGithubTag(username, repo)
 
 ; Show GUI from tray function
 GoToShowGUI:
-	Gui, Show
+	Gui,Main: Show
 	return
 
 ; Tray Exit
