@@ -12,8 +12,10 @@ SendMode Input
 ; Ensures a consistent starting directory.
 SetWorkingDir %A_ScriptDir%
 
-; ===== Grab .ini Data, Create if does not exist ==================================================================================================
+; ===== Version Information ==================================================================================================
+compiledGitTag := "v1.0.0" ; Replace with your current version
 
+; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
 if !FileExist(IniFileName) ; Check if the .ini file does not exist
 {
@@ -56,11 +58,17 @@ Gui, Add, Button, w300 gEditDateTimeFormat, Edit Date Format
 ; Add Hide to Tray button
 Gui, Add, Button, w300 gHideToTray, Hide to Tray
 
-; Add help button
+; Add Check for Updates button
+Gui, Add, Button, w300 gCheckforUpdates, Check for Updates
+
+; Add Reset button
+Gui, Add, Button, w300 gConfirmResettoDefault, Reset to Default
+
+; Add Help button
 Gui, Add, Button, w300 gShowHelp, Help
 
-; Add help button
-Gui, Add, Button, w300 gConfirmResettoDefault, Reset to Default
+; Add Version Information
+Gui, Add, Text, w300 Right, %compiledGitTag%
 
 ; Show the GUI
 Gui, Show
@@ -72,6 +80,25 @@ Return
 ShowHelp:
 	MsgBox Usage Instructions:`n`n1. Use the Edit Initials Button to set your initials.`n2. Use the hotkey "Ctrl + d" to send the current date and time along with your initials.
 	Return
+
+; Check for Updates when requested
+CheckforUpdates:
+    ; Fetch latest tag from GitHub
+    latestGitTag := GetLatestGithubTag("RobertCSternberg", "InsertDateandInitials")
+    
+    if (compiledGitTag != latestGitTag && latestGitTag != "")
+    {
+        MsgBox New version (%latestGitTag%) available! Contact developer for more information. 
+    }
+    else if (latestGitTag = "")
+    {
+        MsgBox Unable to fetch the latest version from GitHub. 
+    }
+    else
+    {
+        MsgBox You are using the latest version: %compiledGitTag%.
+    }
+return
 
 ; Minimize to tray function
 HideToTray:
@@ -140,6 +167,39 @@ ResettoDefault:
     GuiControl, Text, CurrentInitials, Initials: %vInitials% ; Update the GUI label with the new initials	
 	return
 	
+;Get Latest Version from GitHub
+GetLatestGithubTag(username, repo)
+{
+    ; Send a request to the GitHub API to get the latest release tag
+    url := "https://api.github.com/repos/" . username . "/" . repo . "/releases/latest"
+    whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    whr.Open("GET", url, false)
+    whr.setRequestHeader("User-Agent", "AHK Script")
+    whr.Send()
+    response := whr.ResponseText
+    
+    ; Check response status
+    status := whr["Status"]
+    if (status != 200)
+    {
+		MsgBox Error: Status Code - %status%
+        return ""
+    }
+    
+    ; Show the response for debugging
+    ; MsgBox %response%
+    
+    ; Parse the JSON response to get the tag_name
+    tagPattern := """tag_name"":\s*""(v?\d+\.\d+\.\d+)"""
+    
+    if (RegExMatch(response, tagPattern, match))
+    {
+        return match1 ; returns the version number
+    }
+    
+    ; Return empty if unable to fetch the tag (handle this gracefully in the main script)
+    return ""
+}
 	
 ; ===== Called from Tray ==================================================================================================
 
