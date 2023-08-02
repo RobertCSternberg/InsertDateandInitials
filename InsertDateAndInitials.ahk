@@ -35,25 +35,24 @@ Menu, Tray, Add, Exit, TrayExit
 Menu, Tray, Default, Show GUI
 
 ; ===== GUI Creation ==================================================================================================
+; Format the Date for Use in the Preview
+FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
 
 ; Margin and Font
 Gui,Main: Margin, 10, 10
 Gui,Main: Font, s10, Arial3
 
-; Add usage instructions
-Gui,Main: Add, Text, w300, Use the hotkey "Ctrl + d" to send the current date along with your initials.
-
-; Add Current Initials
-Gui,Main: Add, Text, w300 gEditInitials vCurrentInitials, Initials: %vInitials%
-
-; Add Current Date Format
-Gui,Main: Add, Text, w300 gEditDateTimeFormat vCurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat%
-
 ; Add Section
 Gui,Main: Add, Text, w300 Center, ________________________________________
 
-; Add Spacing
-Gui,Main: Add, Text, w300 h10 ,
+; Add Title
+Gui,Main: Add, Text, w300 Center, Currently Using:
+
+; Add Preview
+Gui,Main: Add, Text, w300 Center vPreview, %vCurrentDateTimeFormat% %vInitials%: 
+
+; Add Section
+Gui,Main: Add, Text, w300 Center, ________________________________________
 
 ; Add Section
 Gui,Main: Add, Text, w300 Center, --- General Setup / Hide to Tray ---
@@ -139,7 +138,7 @@ EditInitials:
         editedInitials := "[" . editedInitials . "]" ; Surround with square brackets
         vInitials := editedInitials
         IniWrite, %vInitials%, %IniFileName%, Settings, Initials
-        GuiControl, Text, CurrentInitials, Initials: %vInitials% ; Update the GUI label with the new initials
+		Gosub, UpdatePreview
     }
     return
 	
@@ -175,8 +174,8 @@ UpdateDateTimeFormat(newFormat)
     global IniFileName
     vDateTimeFormat := newFormat
     IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
-    GuiControl, Main: Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the main GUI label with the new DateTimeFormat
-    Gui, FormatPicker:Destroy
+	Gosub, UpdatePreview
+	Gui, FormatPicker:Destroy
 }
 
 
@@ -201,16 +200,17 @@ ConfirmExitApp:
     return
 
 ; Reset Initials and DateTimeFormat to default values. 
-ResettoDefault:
+	ResettoDefault:
 	;Reset DateTimeFormat
 	vDateTimeFormat := "MM/dd/yy ddd"
 	IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
-    GuiControl, Text, CurrentDateTimeFormat, Current Date Time Format: %vDateTimeFormat% ; Update the GUI label with the new DateTimeFormat
 	
 	;Reset Initials
 	vInitials := "[]"
     IniWrite, %vInitials%, %IniFileName%, Settings, Initials
-    GuiControl, Text, CurrentInitials, Initials: %vInitials% ; Update the GUI label with the new initials	
+	
+	;Update the Preview
+	Gosub, UpdatePreview
 	return
 	
 ;Get Latest Version from GitHub
@@ -252,12 +252,12 @@ GetLatestGithubTag(username, repo)
 ; Show GUI from tray function
 GoToShowGUI:
 	Gui,Main: Show
-	return
+return
 
 ; Tray Exit
 TrayExit:
 	ExitApp
-	return
+return
 		
 ; ===== Hotkey Pressed ==================================================================================================
 
@@ -268,8 +268,16 @@ TrayExit:
 	FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
 	
 	; Send the formatted date and time
-	SendInput %vCurrentDateTimeFormat%
+	Send, %vCurrentDateTimeFormat% %vInitials%: 
 	SendInput {Space}
-	Send, %vInitials%:
-	SendInput {Space}
-Return
+return 
+
+; ===== Update Preview ==================================================================================================
+
+UpdatePreview:
+	; Format the current date and time using the selected format
+	FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
+	
+	; Update the main GUI label with the new preview
+	GuiControl, Main: Text, Preview, %vCurrentDateTimeFormat% %vInitials%: 
+return 
