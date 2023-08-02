@@ -13,7 +13,7 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 ; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.2.1" ; Added Preview
+compiledGitTag := "v1.3.0" ; Added Date Formats
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
@@ -143,31 +143,127 @@ EditInitials:
     return
 	
 ; Edit DateTimeFormat function
-EditDateTimeFormat:
-    Gui, FormatPicker:New, -SysMenu
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat1, 01/01/01 Mon
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat2, 01/01/2001
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat3, 01/01/01 Monday
-    Gui, FormatPicker:Add, Button, w100 gCancelFormat, Cancel
-    Gui, FormatPicker:Show, , Pick a DateTime Format
-    return
+	;GUI Creation
+	EditDateTimeFormat:
+		Gui, FormatPicker:New, -SysMenu
 
-SelectFormat1:
-    UpdateDateTimeFormat("MM/dd/yy ddd")
-    return
+		Gui, FormatPicker: Add, Text, w200, Example Date: January 3rd, 2003
+		Gui, FormatPicker: Add, Text, w200, ; Add Spacing    
+		; No Weekday
+		Gui, FormatPicker:Add, Text, w200, No Weekday:
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat01, 01/03 ; MM/yy
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat02, 01/2003 ; MM/yyyy
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat03, 01/02/03 ; MM/dd/yy
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat04, 01/02/2003 ; MM/dd/yyyy
 
-SelectFormat2:
-    UpdateDateTimeFormat("MM/dd/yyyy")
-    return
+		Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
+		; Weekday Short
+		Gui, FormatPicker:Add, Text, w200, Weekday Short:
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat05, 01/02 Fri ; MM/dd ddd
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat07, 01/02/03 Fri (Default) ;MM/dd/yy ddd
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat08, 01/02/2003 Fri ;MM/dd/yyyy ddd
 
-SelectFormat3:
-    UpdateDateTimeFormat("MM/dd/yyyy dddd")
-    return
+		Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
+		; Weekday Long
+		Gui, FormatPicker:Add, Text, w200, Weekday Long:
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat09, 01/02 Friday ;MM/dd dddd
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat11, 01/02/03 Friday ;MM/dd/yy dddd
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat12, 01/02/2003 Friday ;MM/dd/yyyy dddd
 
-CancelFormat:
-    Gui, FormatPicker:Destroy
-    return
+		Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
+		; Month Written, No Weekday
+		Gui, FormatPicker:Add, Text, w200, Month Written, No Weekday:
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat13, Jan 02. ;MMM dd.
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat14, Jan 02 ;MMM dd
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat15, January 02 ;MMMM dd FLIP 15, 16
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat16, January 02, 2003 ;MMMM dd, yyyy FLIP 15, 16
+		
+		Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
+		; Full Dates
+		Gui, FormatPicker:Add, Text, w200, Full Date:
+		Gui, FormatPicker:Add, Button, w200 gSelectFormat17, Friday, January 02, 2003 ;dddd, MMMM dd, yyyy
+		
+		Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
+		; Cancel Function
+		Gui, FormatPicker:Add, Button, w100 gCancelFormat, Cancel
+		Gui, FormatPicker:Show, , Pick a DateTime Format
+	return
 
+	;Load Selected Update into Variable for UpdateDateTimeFormat function to use. 
+	SelectFormat01:
+		UpdateDateTimeFormat("MM/yy")
+	return
+			
+	SelectFormat02:
+		UpdateDateTimeFormat("MM/yyyy")
+	return
+
+	SelectFormat03:
+		UpdateDateTimeFormat("MM/dd/yy")
+	return
+
+	SelectFormat04:
+		UpdateDateTimeFormat("MM/dd/yyyy")
+	return
+
+	SelectFormat05:
+		UpdateDateTimeFormat("MM/dd ddd")
+	return
+
+	SelectFormat06:
+		UpdateDateTimeFormat("MM/yyyy ddd")
+	return
+
+	SelectFormat07:
+		UpdateDateTimeFormat("MM/dd/yy ddd")
+	return
+
+	SelectFormat08:
+		UpdateDateTimeFormat("MM/dd/yyyy ddd")
+	return
+
+	SelectFormat09:
+		UpdateDateTimeFormat("MM/dd dddd")
+	return
+
+	SelectFormat10:
+		UpdateDateTimeFormat("MM/yyyy dddd")
+	return
+
+	SelectFormat11:
+		UpdateDateTimeFormat("MM/dd/yy dddd")
+	return
+
+	SelectFormat12:
+		UpdateDateTimeFormat("MM/dd/yyyy dddd")
+	return
+
+	SelectFormat13:
+		UpdateDateTimeFormat("MMM dd.")
+	return
+
+	SelectFormat14:
+		UpdateDateTimeFormat("MMM dd")
+	return
+
+	SelectFormat15:
+		UpdateDateTimeFormat("MMMM dd")
+	return
+
+	SelectFormat16:
+		UpdateDateTimeFormat("MMMM dd, yyyy")
+	return
+
+	SelectFormat17:
+		UpdateDateTimeFormat("dddd, MMMM dd, yyyy")
+	return
+
+	CancelFormat:
+		Gui, FormatPicker:Destroy
+	return
+
+
+; Execute Update to Variable and Preview
 UpdateDateTimeFormat(newFormat)
 {
     global vDateTimeFormat
@@ -187,7 +283,7 @@ ConfirmResetToDefault:
         ; The user clicked Yes, so proceed with resetting to default
         GoSub, ResettoDefault
     }
-    return
+return
 	
 ; Confirm Exit
 ConfirmExitApp:
@@ -197,21 +293,21 @@ ConfirmExitApp:
         ; The user clicked Yes, so proceed to ExitApp
         ExitApp
     }
-    return
+return
 
 ; Reset Initials and DateTimeFormat to default values. 
-	ResettoDefault:
+ResettoDefault:
 	;Reset DateTimeFormat
 	vDateTimeFormat := "MM/dd/yy ddd"
 	IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
 	
 	;Reset Initials
 	vInitials := "[]"
-    IniWrite, %vInitials%, %IniFileName%, Settings, Initials
+	IniWrite, %vInitials%, %IniFileName%, Settings, Initials
 	
 	;Update the Preview
 	Gosub, UpdatePreview
-	return
+return
 	
 ;Get Latest Version from GitHub
 GetLatestGithubTag(username, repo)
