@@ -13,7 +13,7 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 ; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.3.0" ; Added Date Formats
+compiledGitTag := "v1.4.0" ; Added Dark Mode
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
@@ -86,7 +86,7 @@ Gui,Main: Add, Button, w300 gShowHelp, Help
 Gui,Main: Add, Text, w300 Right, %compiledGitTag%
 
 ; Show the GUI
-Gui,Main: Show
+Gui,Main: Show, , Date and Initials Helper
 Return
 
 ; ===== Called from Main GUI ==================================================================================================
@@ -132,16 +132,13 @@ MainGuiClose:
 		Gui, InitialsEditor: New, -SysMenu
 		Gui, InitialsEditor: Margin, 10, 10
 		Gui, InitialsEditor: Font, s10 cWhite, Arial ;
-		Gui, InitialsEditor: Color, 1E1E1E, F1F1F1 ; This sets the background to a dark gray and text to a light gray
+		Gui, InitialsEditor: Color, 1E1E1E; This sets the background to a dark gray and text to a light gray
 		Gui, InitialsEditor: +AlwaysOnTop	
 		Gui, InitialsEditor: Add, Text, , Enter your initials:
-		Gui, InitialsEditor: Add, Edit, vNewInitials w200
-		Gui, InitialsEditor: Add, Button, gUpdateInitials, OK
-		Gui, InitialsEditor: Add, Button, gCancelEdit, Cancel
-
-
-
-		Gui, InitialsEditor: Show
+		Gui, InitialsEditor: Add, Edit, vNewInitials w200 cBlack
+		Gui, InitialsEditor: Add, Button, gUpdateInitials w200, OK
+		Gui, InitialsEditor: Add, Button, gCancelEdit w200, Cancel
+		Gui, InitialsEditor: Show, , Update Initials
 	return
 
 	; Execute Update to Variable and Preview
@@ -215,8 +212,8 @@ MainGuiClose:
 		
 		Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
 		; Cancel Function
-		Gui, FormatPicker:Add, Button, w100 gCancelFormat, Cancel
-		Gui, FormatPicker:Show, , Pick a DateTime Format
+		Gui, FormatPicker:Add, Button, w200 gCancelFormat Center, Cancel
+		Gui, FormatPicker:Show, , Update Date Format
 	return
 
 	;Load Selected Update into Variable for UpdateDateTimeFormat function to use. 
