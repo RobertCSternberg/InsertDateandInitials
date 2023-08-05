@@ -13,7 +13,7 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 ; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.3.0" ; Added Date Formats
+compiledGitTag := "v1.4.0" ; Added Dark Mode
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
@@ -38,9 +38,10 @@ Menu, Tray, Default, Show GUI
 ; Format the Date for Use in the Preview
 FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
 
-; Margin and Font
+; Set GUI colors for dark theme, margin, and font
 Gui,Main: Margin, 10, 10
-Gui,Main: Font, s10, Arial3
+Gui,Main: Font, s10 cWhite, Arial ;
+Gui,Main: Color, 1E1E1E, F1F1F1 ; This sets the background to a dark gray and text to a light gray
 
 ; Add Section
 Gui,Main: Add, Text, w300 Center, ________________________________________
@@ -85,7 +86,7 @@ Gui,Main: Add, Button, w300 gShowHelp, Help
 Gui,Main: Add, Text, w300 Right, %compiledGitTag%
 
 ; Show the GUI
-Gui,Main: Show
+Gui,Main: Show, , Date and Initials Helper
 Return
 
 ; ===== Called from Main GUI ==================================================================================================
@@ -124,31 +125,59 @@ MainGuiClose:
 	GoSub, ConfirmExitApp
 	Return
 
-; Edit Initials function
-EditInitials:
-    Gui,Main: Submit, NoHide
-    InputBox, editedInitials, Edit Initials, Enter your initials:, , , , , %vInitials%
-	if (ErrorLevel) ; Check if the user pressed the Cancel button
-        return ; If canceled, do nothing
-		
-    if (editedInitials <> "")
-    {
-        editedInitials := Trim(editedInitials)
-        StringUpper, editedInitials, editedInitials ; Convert to uppercase using StringUpper
-        editedInitials := "[" . editedInitials . "]" ; Surround with square brackets
-        vInitials := editedInitials
-        IniWrite, %vInitials%, %IniFileName%, Settings, Initials
-		Gosub, UpdatePreview
-    }
-    return
+
+;Edit Initials function
+	EditInitials:
+		; Apply Dark theme
+		Gui, InitialsEditor: New, -SysMenu
+		Gui, InitialsEditor: Margin, 10, 10
+		Gui, InitialsEditor: Font, s10 cWhite, Arial ;
+		Gui, InitialsEditor: Color, 1E1E1E; This sets the background to a dark gray and text to a light gray
+		Gui, InitialsEditor: +AlwaysOnTop	
+		Gui, InitialsEditor: Add, Text, , Enter your initials:
+		Gui, InitialsEditor: Add, Edit, vNewInitials w200 cBlack
+		Gui, InitialsEditor: Add, Button, gUpdateInitials w200, OK
+		Gui, InitialsEditor: Add, Button, gCancelEdit w200, Cancel
+		Gui, InitialsEditor: Show, , Update Initials
+	return
+
+	; Execute Update to Variable and Preview
+	UpdateInitials:
+		Gui, InitialsEditor: Submit
+		if (NewInitials <> "")
+		{
+			global vInitials
+			global IniFileName
+			NewInitials := Trim(NewInitials)
+			StringUpper, NewInitials, NewInitials ; Convert to uppercase using StringUpper
+			NewInitials := "[" . NewInitials . "]" ; Surround with square brackets
+			vInitials := NewInitials
+			IniWrite, %vInitials%, %IniFileName%, Settings, Initials
+			Gosub, UpdatePreview
+			Gui, InitialsEditor:Destroy
+		}
+	return
+
+	; Cancel Edit
+	CancelEdit:
+		Gui, InitialsEditor:Destroy
+	return
+
 	
 ; Edit DateTimeFormat function
 	;GUI Creation
 	EditDateTimeFormat:
-		Gui, FormatPicker:New, -SysMenu
+		; Set GUI colors for dark theme, margin, font, and remove system menu actions of Minimize, Maximize and Close.
+		Gui, FormatPicker: New, -SysMenu
+		Gui, FormatPicker: Margin, 10, 10
+		Gui, FormatPicker: Font, s10 cWhite, Arial ;
+		Gui, FormatPicker: Color, 1E1E1E, F1F1F1 ; This sets the background to a dark gray and text to a light gray
 
-		Gui, FormatPicker: Add, Text, w200, Example Date: January 3rd, 2003
-		Gui, FormatPicker: Add, Text, w200, ; Add Spacing    
+		Gui, FormatPicker: Add, Text, w200, Example Date: 
+		Gui, FormatPicker: Add, Text, w200, January 3rd, 2003
+		; Add Section
+		Gui, FormatPicker: Add, Text, w200 Center, ________________________
+		;Gui, FormatPicker: Add, Text, w200, ; Add Spacing    
 		; No Weekday
 		Gui, FormatPicker:Add, Text, w200, No Weekday:
 		Gui, FormatPicker:Add, Button, w200 gSelectFormat01, 01/03 ; MM/yy
@@ -185,8 +214,8 @@ EditInitials:
 		
 		Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
 		; Cancel Function
-		Gui, FormatPicker:Add, Button, w100 gCancelFormat, Cancel
-		Gui, FormatPicker:Show, , Pick a DateTime Format
+		Gui, FormatPicker:Add, Button, w200 gCancelFormat Center, Cancel
+		Gui, FormatPicker:Show, , Update Date Format
 	return
 
 	;Load Selected Update into Variable for UpdateDateTimeFormat function to use. 
