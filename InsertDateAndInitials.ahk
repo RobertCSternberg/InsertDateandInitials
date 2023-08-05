@@ -173,9 +173,11 @@ MainGuiClose:
 		Gui, FormatPicker: Font, s10 cWhite, Arial ;
 		Gui, FormatPicker: Color, 1E1E1E, F1F1F1 ; This sets the background to a dark gray and text to a light gray
 
-
-		Gui, FormatPicker: Add, Text, w200, Example Date: January 3rd, 2003
-		Gui, FormatPicker: Add, Text, w200, ; Add Spacing    
+		Gui, FormatPicker: Add, Text, w200, Example Date: 
+		Gui, FormatPicker: Add, Text, w200, January 3rd, 2003
+		; Add Section
+		Gui, FormatPicker: Add, Text, w200 Center, ________________________
+		;Gui, FormatPicker: Add, Text, w200, ; Add Spacing    
 		; No Weekday
 		Gui, FormatPicker:Add, Text, w200, No Weekday:
 		Gui, FormatPicker:Add, Button, w200 gSelectFormat01, 01/03 ; MM/yy
