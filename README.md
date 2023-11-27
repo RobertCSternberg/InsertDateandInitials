@@ -9,10 +9,10 @@ The initial part of the script sets several configurations to ensure reliable an
 The script forces uppercase initials surrounded by square brackets, this can be overridden by manually modifing the .ini file. 
 
 ### Date Formatting: 
-The script formats the current date into a default style of MM/dd/yy ddd and can be modified by the end user. 
+The script formats the current date into a default style of MM/dd/yy ddd and can be modified by the end user using the Edit Date Format dialog. 
 
 ### GUI Creation: 
 The script creates a graphical user interface (GUI) that includes a help function, a collapse to tray function, an input function for initials, and an input function to update DateTime formatting. 
 
 ### Hotkey Definition: 
-A hotkey (Ctrl + d) is defined. When the user presses the hotkey, the script will check which radio button is selected (i.e., which date format the user has chosen). It will then re-format the current date and time according to the user's selection, and send the formatted date and time, followed by the user's initials.
+A hotkey (Ctrl + d) is defined. When the user presses the hotkey, the script will check which date format the user has chosen. It will then re-format the current date and time according to the user's selection, and send the formatted date and time, followed by the user's initials enclosed in square brackets.
