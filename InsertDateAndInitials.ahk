@@ -13,7 +13,7 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 ; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.5.0" ; Resolves #28
+compiledGitTag := "v1.6.0" ; Resolves #30 - Edit Date Format dialog for lower resolution displays
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
