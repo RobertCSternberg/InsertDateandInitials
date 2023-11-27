@@ -164,7 +164,6 @@ MainGuiClose:
 	return
 
 	
-	
 ; Edit DateTimeFormat function
 ; GUI Creation
 EditDateTimeFormat:
@@ -176,49 +175,50 @@ EditDateTimeFormat:
 
     Gui, FormatPicker: Add, Text, w200, Example Date: 
     Gui, FormatPicker: Add, Text, w200, January 2nd, 2003  ; Updated example date
-    ; Add Section
-    Gui, FormatPicker: Add, Text, w200 Center, ________________________
-    ;Gui, FormatPicker: Add, Text, w200, ; Add Spacing    
-    ; No Weekday
-    Gui, FormatPicker:Add, Text, w200, No Weekday:
+	
+	Gui, FormatPicker:Add, Button, w200 gSelectFormat07, 01/02/03 Thu (Default) ; MM/dd/yy ddd
+	Gui, FormatPicker:Add, Button, w200 gCancelFormat Center, Cancel
+
+    ; Add Tabs
+    Gui, FormatPicker: Add, Tab, vMyTab, No Weekday|Weekday Short|Weekday Long|Month Written|Full Dates
+
+    ; No Weekday Tab Content
+    Gui, FormatPicker: Tab, No Weekday
     Gui, FormatPicker:Add, Button, w200 gSelectFormat01, 01/03 (month/year) ; MM/yy
-	Gui, FormatPicker:Add, Button, w200 gSelectFormat18, 01/02 (month/day) ; MM/dd
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat18, 01/02 (month/day) ; MM/dd
     Gui, FormatPicker:Add, Button, w200 gSelectFormat02, 01/2003 ; MM/yyyy
     Gui, FormatPicker:Add, Button, w200 gSelectFormat03, 01/02/03 ; MM/dd/yy
     Gui, FormatPicker:Add, Button, w200 gSelectFormat04, 01/02/2003 ; MM/dd/yyyy
 
-    Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
-    ; Weekday Short
-    Gui, FormatPicker:Add, Text, w200, Weekday Short:
+    ; Weekday Short Tab Content
+    Gui, FormatPicker: Tab, Weekday Short
     Gui, FormatPicker:Add, Button, w200 gSelectFormat05, 01/02 Thu ; MM/dd ddd
     Gui, FormatPicker:Add, Button, w200 gSelectFormat07, 01/02/03 Thu ; MM/dd/yy ddd
     Gui, FormatPicker:Add, Button, w200 gSelectFormat08, 01/02/2003 Thu ; MM/dd/yyyy ddd
 
-    Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
-    ; Weekday Long
-    Gui, FormatPicker:Add, Text, w200, Weekday Long:
+    ; Weekday Long Tab Content
+    Gui, FormatPicker: Tab, Weekday Long
     Gui, FormatPicker:Add, Button, w200 gSelectFormat09, 01/02 Thursday ; MM/dd dddd
     Gui, FormatPicker:Add, Button, w200 gSelectFormat11, 01/02/03 Thursday ; MM/dd/yy dddd
     Gui, FormatPicker:Add, Button, w200 gSelectFormat12, 01/02/2003 Thursday ; MM/dd/yyyy dddd
 
-    Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
-    ; Month Written, No Weekday
-    Gui, FormatPicker:Add, Text, w200, Month Written, No Weekday:
+    ; Month Written, No Weekday Tab Content
+    Gui, FormatPicker: Tab, Month Written
     Gui, FormatPicker:Add, Button, w200 gSelectFormat13, Jan 02. ; MMM dd.
     Gui, FormatPicker:Add, Button, w200 gSelectFormat14, Jan 02 ; MMM dd
     Gui, FormatPicker:Add, Button, w200 gSelectFormat15, January 02 ; MMMM dd
     Gui, FormatPicker:Add, Button, w200 gSelectFormat16, January 02, 2003 ; MMMM dd, yyyy
 
-    Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
-    ; Full Dates
-    Gui, FormatPicker:Add, Text, w200, Full Date:
+    ; Full Dates Tab Content
+    Gui, FormatPicker: Tab, Full Dates
     Gui, FormatPicker:Add, Button, w200 gSelectFormat17, Thursday, January 02, 2003 ; dddd, MMMM dd, yyyy
 
-    Gui, FormatPicker: Add, Text, w200 , ; Add Spacing
-    ; Cancel Function
-    Gui, FormatPicker:Add, Button, w200 gCancelFormat Center, Cancel
+	; Close Tab Control
+    Gui, FormatPicker: Tab
+
     Gui, FormatPicker:Show, , Update Date Format
 return
+
 
 
 	;Load Selected Update into Variable for UpdateDateTimeFormat function to use. 
