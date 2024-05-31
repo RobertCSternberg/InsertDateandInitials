@@ -1,6 +1,6 @@
 ; ===== Standard AHK ==================================================================================================
 
-; Recommended for performance and compatibility with future AutoHotkey releases.
+; Recommended for performance and compatibility with future AutoHotkey releases.  
 #NoEnv
 
 ; Enable warnings to assist with detecting common errors.
@@ -13,7 +13,7 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 ; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.6.0" ; Resolves #30 - Edit Date Format dialog for lower resolution displays
+compiledGitTag := "v1.6.1" ; Updates initials to print with parenthesis for compatibility with Acumatica ERP. Provide a link to the latest version. 
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
@@ -103,7 +103,7 @@ CheckforUpdates:
     
     if (compiledGitTag != latestGitTag && latestGitTag != "")
     {
-        MsgBox New version (%latestGitTag%) available! Contact developer for more information. 
+        MsgBox New version (%latestGitTag%) available! Visit https://github.com/RobertCSternberg/InsertDateandInitials/ for the latest release. 
     }
     else if (latestGitTag = "")
     {
@@ -150,7 +150,7 @@ MainGuiClose:
 			global IniFileName
 			NewInitials := Trim(NewInitials)
 			StringUpper, NewInitials, NewInitials ; Convert to uppercase using StringUpper
-			NewInitials := "[" . NewInitials . "]" ; Surround with square brackets
+			NewInitials := "(" . NewInitials . ")" ; Surround with parenthesis
 			vInitials := NewInitials
 			IniWrite, %vInitials%, %IniFileName%, Settings, Initials
 			Gosub, UpdatePreview
@@ -338,7 +338,7 @@ ResettoDefault:
 	IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
 	
 	;Reset Initials
-	vInitials := "[]"
+	vInitials := "()"
 	IniWrite, %vInitials%, %IniFileName%, Settings, Initials
 	
 	;Update the Preview
