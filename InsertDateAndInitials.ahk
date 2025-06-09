@@ -13,7 +13,7 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 ; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.6.1" ; Updates initials to print with parenthesis for compatibility with Acumatica ERP. Provide a link to the latest version. 
+compiledGitTag := "v1.6.2" ; Updates initials to print without tags for compatibility with Acumatica ERP. Provide a link to the latest version. 
 
 ; ===== Grab .ini Data, Create if does not exist ==================================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
@@ -150,7 +150,7 @@ MainGuiClose:
 			global IniFileName
 			NewInitials := Trim(NewInitials)
 			StringUpper, NewInitials, NewInitials ; Convert to uppercase using StringUpper
-			NewInitials := "(" . NewInitials . ")" ; Surround with parenthesis
+			NewInitials := "" . NewInitials . "" ; Add any optional start and end tags to the initials. 
 			vInitials := NewInitials
 			IniWrite, %vInitials%, %IniFileName%, Settings, Initials
 			Gosub, UpdatePreview
