@@ -189,6 +189,7 @@ EditDateTimeFormat:
     Gui, FormatPicker:Add, Button, w200 gSelectFormat02, 01/2003 ; MM/yyyy
     Gui, FormatPicker:Add, Button, w200 gSelectFormat03, 01/02/03 ; MM/dd/yy
     Gui, FormatPicker:Add, Button, w200 gSelectFormat04, 01/02/2003 ; MM/dd/yyyy
+    Gui, FormatPicker:Add, Button, w200 gSelectFormat18, 2003/01/02 ; yyyy/MM/dd
 
     ; Weekday Short Tab Content
     Gui, FormatPicker: Tab, Weekday Short
@@ -236,6 +237,10 @@ return
 
 	SelectFormat04:
 		UpdateDateTimeFormat("MM/dd/yyyy")
+	return
+
+	SelectFormat18:
+		UpdateDateTimeFormat("yyyy/MM/dd")  ;Added format for better sorting
 	return
 
 	SelectFormat05:
