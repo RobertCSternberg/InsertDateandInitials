@@ -1,420 +1,423 @@
-; ===== Standard AHK ==================================================================================================
-
-; Recommended for performance and compatibility with future AutoHotkey releases.  
-#NoEnv
-
-; Enable warnings to assist with detecting common errors.
+#Requires AutoHotkey v2.0
+#SingleInstance Force
 #Warn
+SetWorkingDir(A_ScriptDir)
 
-; Recommended for new scripts due to its superior speed and reliability.
-SendMode Input
+; ===== Version Information =============================================================================
+compiledGitTag := "v2.1.2"
 
-; Ensures a consistent starting directory.
-SetWorkingDir %A_ScriptDir%
-
-; ===== Version Information ==================================================================================================
-compiledGitTag := "v1.6.2" ; Updates initials to print without tags for compatibility with Acumatica ERP. Provide a link to the latest version. 
-
-; ===== Grab .ini Data, Create if does not exist ==================================================================================================
+; ===== INI & Settings ==================================================================================
 IniFileName := "Settings_InsertDateAndInitials.ini"
-if !FileExist(IniFileName) ; Check if the .ini file does not exist
-{
-	IniWrite, "", %IniFileName%, Settings, Initials
-	IniWrite, MM/dd/yy ddd, %IniFileName%, Settings, DateTimeFormat ; Set default date-time format
+
+if !FileExist(IniFileName) {
+    IniWrite("",             IniFileName, "Settings", "Initials")
+    IniWrite("MM/dd/yy ddd", IniFileName, "Settings", "DateTimeFormat")
+    IniWrite("()",           IniFileName, "Settings", "InitialsList") ; default list
 }
 
-IniRead, vInitials, %IniFileName%, Settings, Initials
-IniRead, vDateTimeFormat, %IniFileName%, Settings, DateTimeFormat
+; Active initials and format
+vInitials       := IniRead(IniFileName, "Settings", "Initials",        "()")
+vDateTimeFormat := IniRead(IniFileName, "Settings", "DateTimeFormat",  "MM/dd/yy ddd")
 
-; ===== Setup ==================================================================================================
+; Load list (pipe-delimited), ensure active is present
+InitialsList := LoadInitialsList()
+if !InitialsList.Has(vInitials)
+    InitialsList.Push(vInitials), SaveInitialsList()
 
-; Tray Menu
-Menu, Tray, NoStandard
-Menu, Tray, Add, Show GUI, GoToShowGUI
-Menu, Tray, Add, Exit, TrayExit
-Menu, Tray, Default, Show GUI
+; ===== Tray Menu =======================================================================================
+A_TrayMenu.Delete()
+A_TrayMenu.Add("Show GUI", GoToShowGUI)
 
-; ===== GUI Creation ==================================================================================================
-; Format the Date for Use in the Preview
-FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
+; Build dynamic submenu for initials
+InitialsMenuLabel := "Initials"
+RebuildInitialsTrayMenu()
 
-; Set GUI colors for dark theme, margin, and font
-Gui,Main: Margin, 10, 10
-Gui,Main: Font, s10 cWhite, Arial ;
-Gui,Main: Color, 1E1E1E, F1F1F1 ; This sets the background to a dark gray and text to a light gray
+A_TrayMenu.Add("Exit", TrayExit)
+A_TrayMenu.Default := "Show GUI"
 
-; Add Section
-Gui,Main: Add, Text, w300 Center, ________________________________________
+; ===== GUI Creation ====================================================================================
+Main := Gui()
+Main.MarginX := 10, Main.MarginY := 10
+Main.SetFont("s10 cWhite", "Arial")
+Main.BackColor := 0x1E1E1E
+Main.Title := "Date and Initials Helper"
 
-; Add Title
-Gui,Main: Add, Text, w300 Center, Currently Using:
+Main.AddText("w300 Center", "________________________________________")
+Main.AddText("w300 Center", "Currently Using:")
+PreviewCtrl := Main.AddText("w300 Center", "")
+Main.AddText("w300 Center", "________________________________________")
+Main.AddText("w300 Center", "--- General Setup / Hide to Tray ---")
 
-; Add Preview
-Gui,Main: Add, Text, w300 Center vPreview, %vCurrentDateTimeFormat% %vInitials%: 
+btn := Main.AddButton("w300", "Change Initials"),  btn.OnEvent("Click", ChangeInitials)
+btn := Main.AddButton("w300", "Edit Date Format"), btn.OnEvent("Click", EditDateTimeFormat)
+btn := Main.AddButton("w300", "Hide to Tray"),     btn.OnEvent("Click", HideToTray)
 
-; Add Section
-Gui,Main: Add, Text, w300 Center, ________________________________________
+Main.AddText("w300", "")
+Main.AddText("w300 Center", "--- Settings / Help ---")
+btn := Main.AddButton("w300", "Check for Updates"), btn.OnEvent("Click", CheckforUpdates)
+btn := Main.AddButton("w300", "Reset to Default"),  btn.OnEvent("Click", ConfirmResetToDefault)
+btn := Main.AddButton("w300", "Help"),              btn.OnEvent("Click", ShowHelp)
+Main.AddText("w300 Right", compiledGitTag)
+Main.OnEvent("Close", ConfirmExitApp)
 
-; Add Section
-Gui,Main: Add, Text, w300 Center, --- General Setup / Hide to Tray ---
+UpdatePreview()
+Main.Show()
 
-; Add Edit Initials button
-Gui,Main: Add, Button, w300 gEditInitials, Edit Initials
+; ===== Hotkey ==========================================================================================
+Hotkey("^d", SendDateAndInitials)
 
-; Add Edit Date Format button
-Gui,Main: Add, Button, w300 gEditDateTimeFormat, Edit Date Format
+SendDateAndInitials(*) {
+    global vDateTimeFormat, vInitials
+    dt := FormatTime(, vDateTimeFormat)  ; (Time, Format) with blank time = now
+    SendText dt . " " . vInitials . ": "
+}
 
-; Add Hide to Tray button
-Gui,Main: Add, Button, w300 gHideToTray, Hide to Tray
+; ===== Handlers / Functions ============================================================================
 
-; Add Spacing
-Gui,Main: Add, Text, w300 ,
+ShowHelp(*) {
+    MsgBox "Usage Instructions:`n`n1) Change Initials to manage or switch saved initials.`n2) Use the hotkey Ctrl+D to insert the current date/time and active initials."
+}
 
-; Add Section
-Gui,Main: Add, Text, w300 Center, --- Settings / Help ---
-
-; Add Check for Updates button
-Gui,Main: Add, Button, w300 gCheckforUpdates, Check for Updates
-
-; Add Reset button
-Gui,Main: Add, Button, w300 gConfirmResettoDefault, Reset to Default
-
-; Add Help button
-Gui,Main: Add, Button, w300 gShowHelp, Help
-
-; Add Version Information
-Gui,Main: Add, Text, w300 Right, %compiledGitTag%
-
-; Show the GUI
-Gui,Main: Show, , Date and Initials Helper
-Return
-
-; ===== Called from Main GUI ==================================================================================================
-
-; Show help dialog when requested
-ShowHelp:
-	MsgBox Usage Instructions:`n`n1. Use the Edit Initials Button to set your initials.`n2. Use the hotkey "Ctrl + d" to send the current date and time along with your initials.
-	Return
-
-; Check for Updates when requested
-CheckforUpdates:
-    ; Fetch latest tag from GitHub
+CheckforUpdates(*) {
+    global compiledGitTag
     latestGitTag := GetLatestGithubTag("RobertCSternberg", "InsertDateandInitials")
-    
-    if (compiledGitTag != latestGitTag && latestGitTag != "")
-    {
-        MsgBox New version (%latestGitTag%) available! Visit https://github.com/RobertCSternberg/InsertDateandInitials/ for the latest release. 
+    if (latestGitTag != "" && latestGitTag != compiledGitTag) {
+        MsgBox "New version (" latestGitTag ") available! Visit https://github.com/RobertCSternberg/InsertDateandInitials/ for the latest release."
+    } else if (latestGitTag = "") {
+        MsgBox "Unable to fetch the latest version from GitHub."
+    } else {
+        MsgBox "You are using the latest version: " compiledGitTag "."
     }
-    else if (latestGitTag = "")
-    {
-        MsgBox Unable to fetch the latest version from GitHub. 
-    }
-    else
-    {
-        MsgBox You are using the latest version: %compiledGitTag%.
-    }
-return
-
-; Minimize to tray function
-HideToTray:
-	WinHide, A
-	return
-	
-; Exit the script when the GUI is closed
-MainGuiClose:
-	GoSub, ConfirmExitApp
-	Return
-
-
-;Edit Initials function
-	EditInitials:
-		; Apply Dark theme
-		Gui, InitialsEditor: New, -SysMenu
-		Gui, InitialsEditor: Margin, 10, 10
-		Gui, InitialsEditor: Font, s10 cWhite, Arial ;
-		Gui, InitialsEditor: Color, 1E1E1E; This sets the background to a dark gray and text to a light gray
-		Gui, InitialsEditor: +AlwaysOnTop	
-		Gui, InitialsEditor: Add, Text, , Enter your initials:
-		Gui, InitialsEditor: Add, Edit, vNewInitials w200 cBlack
-		Gui, InitialsEditor: Add, Button, gUpdateInitials w200, OK
-		Gui, InitialsEditor: Add, Button, gCancelEdit w200, Cancel
-		Gui, InitialsEditor: Show, , Update Initials
-	return
-
-	; Execute Update to Variable and Preview
-	UpdateInitials:
-		Gui, InitialsEditor: Submit
-		if (NewInitials <> "")
-		{
-			global vInitials
-			global IniFileName
-			NewInitials := Trim(NewInitials)
-			StringUpper, NewInitials, NewInitials ; Convert to uppercase using StringUpper
-			NewInitials := "" . NewInitials . "" ; Add any optional start and end tags to the initials. 
-			vInitials := NewInitials
-			IniWrite, %vInitials%, %IniFileName%, Settings, Initials
-			Gosub, UpdatePreview
-			Gui, InitialsEditor:Destroy
-		}
-	return
-
-	; Cancel Edit
-	CancelEdit:
-		Gui, InitialsEditor:Destroy
-	return
-
-	
-; Edit DateTimeFormat function
-; GUI Creation
-EditDateTimeFormat:
-    ; Set GUI colors for dark theme, margin, font, and remove system menu actions of Minimize, Maximize and Close.
-    Gui, FormatPicker: New, -SysMenu
-    Gui, FormatPicker: Margin, 10, 10
-    Gui, FormatPicker: Font, s10 cWhite, Arial
-    Gui, FormatPicker: Color, 1E1E1E, F1F1F1 ; This sets the background to a dark gray and text to a light gray
-
-    Gui, FormatPicker: Add, Text, w200, Example Date: 
-    Gui, FormatPicker: Add, Text, w200, January 2nd, 2003  ; Updated example date
-	
-	Gui, FormatPicker:Add, Button, w200 gSelectFormat07, 01/02/03 Thu (Default) ; MM/dd/yy ddd
-	Gui, FormatPicker:Add, Button, w200 gCancelFormat Center, Cancel
-
-    ; Add Tabs
-    Gui, FormatPicker: Add, Tab, vMyTab, No Weekday|Weekday Short|Weekday Long|Month Written|Full Dates
-
-    ; No Weekday Tab Content
-    Gui, FormatPicker: Tab, No Weekday
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat01, 01/03 (month/year) ; MM/yy
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat18, 01/02 (month/day) ; MM/dd
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat02, 01/2003 ; MM/yyyy
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat03, 01/02/03 ; MM/dd/yy
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat04, 01/02/2003 ; MM/dd/yyyy
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat18, 2003/01/02 ; yyyy/MM/dd
-
-    ; Weekday Short Tab Content
-    Gui, FormatPicker: Tab, Weekday Short
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat05, 01/02 Thu ; MM/dd ddd
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat07, 01/02/03 Thu ; MM/dd/yy ddd
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat08, 01/02/2003 Thu ; MM/dd/yyyy ddd
-
-    ; Weekday Long Tab Content
-    Gui, FormatPicker: Tab, Weekday Long
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat09, 01/02 Thursday ; MM/dd dddd
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat11, 01/02/03 Thursday ; MM/dd/yy dddd
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat12, 01/02/2003 Thursday ; MM/dd/yyyy dddd
-
-    ; Month Written, No Weekday Tab Content
-    Gui, FormatPicker: Tab, Month Written
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat13, Jan 02. ; MMM dd.
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat14, Jan 02 ; MMM dd
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat15, January 02 ; MMMM dd
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat16, January 02, 2003 ; MMMM dd, yyyy
-
-    ; Full Dates Tab Content
-    Gui, FormatPicker: Tab, Full Dates
-    Gui, FormatPicker:Add, Button, w200 gSelectFormat17, Thursday, January 02, 2003 ; dddd, MMMM dd, yyyy
-
-	; Close Tab Control
-    Gui, FormatPicker: Tab
-
-    Gui, FormatPicker:Show, , Update Date Format
-return
-
-
-
-	;Load Selected Update into Variable for UpdateDateTimeFormat function to use. 
-	SelectFormat01:
-		UpdateDateTimeFormat("MM/yy")
-	return
-			
-	SelectFormat02:
-		UpdateDateTimeFormat("MM/yyyy")
-	return
-
-	SelectFormat03:
-		UpdateDateTimeFormat("MM/dd/yy")
-	return
-
-	SelectFormat04:
-		UpdateDateTimeFormat("MM/dd/yyyy")
-	return
-
-	SelectFormat18:
-		UpdateDateTimeFormat("yyyy/MM/dd")  ;Added format for better sorting
-	return
-
-	SelectFormat05:
-		UpdateDateTimeFormat("MM/dd ddd")
-	return
-
-	SelectFormat06:
-		UpdateDateTimeFormat("MM/yyyy ddd")
-	return
-
-	SelectFormat07:
-		UpdateDateTimeFormat("MM/dd/yy ddd")
-	return
-
-	SelectFormat08:
-		UpdateDateTimeFormat("MM/dd/yyyy ddd")
-	return
-
-	SelectFormat09:
-		UpdateDateTimeFormat("MM/dd dddd")
-	return
-
-	SelectFormat10:
-		UpdateDateTimeFormat("MM/yyyy dddd")
-	return
-
-	SelectFormat11:
-		UpdateDateTimeFormat("MM/dd/yy dddd")
-	return
-
-	SelectFormat12:
-		UpdateDateTimeFormat("MM/dd/yyyy dddd")
-	return
-
-	SelectFormat13:
-		UpdateDateTimeFormat("MMM dd.")
-	return
-
-	SelectFormat14:
-		UpdateDateTimeFormat("MMM dd")
-	return
-
-	SelectFormat15:
-		UpdateDateTimeFormat("MMMM dd")
-	return
-
-	SelectFormat16:
-		UpdateDateTimeFormat("MMMM dd, yyyy")
-	return
-
-	SelectFormat17:
-		UpdateDateTimeFormat("dddd, MMMM dd, yyyy")
-	return
-	
-	SelectFormat18:
-		UpdateDateTimeFormat("MM/dd")
-	return
-
-	CancelFormat:
-		Gui, FormatPicker:Destroy
-	return
-
-
-; Execute Update to Variable and Preview
-UpdateDateTimeFormat(newFormat)
-{
-    global vDateTimeFormat
-    global IniFileName
-    vDateTimeFormat := newFormat
-    IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
-	Gosub, UpdatePreview
-	Gui, FormatPicker:Destroy
 }
 
+HideToTray(*) {
+    global Main
+    Main.Hide()
+}
 
-; Confirm Reset to Default
-ConfirmResetToDefault:
-    MsgBox, 4, Reset to Default, Are you sure you want to reset the settings to default? This action cannot be undone.
-    IfMsgBox, Yes
-    {
-        ; The user clicked Yes, so proceed with resetting to default
-        GoSub, ResettoDefault
-    }
-return
-	
-; Confirm Exit
-ConfirmExitApp:
-    MsgBox, 4, Quit?, Are you sure you want to quit the application? `n `nInstead consider hiding to the system tray. This action can be preformed on the main menu with Hide to Tray and will allow you to continue using the hotkey Ctrl+D.
-    IfMsgBox, Yes
-    {
-        ; The user clicked Yes, so proceed to ExitApp
-        ExitApp
-    }
-return
+ConfirmExitApp(*) {
+    txt := "
+    (
+    Are you sure you want to quit the application?
 
-; Reset Initials and DateTimeFormat to default values. 
-ResettoDefault:
-	;Reset DateTimeFormat
-	vDateTimeFormat := "MM/dd/yy ddd"
-	IniWrite, %vDateTimeFormat%, %IniFileName%, Settings, DateTimeFormat
-	
-	;Reset Initials
-	vInitials := "()"
-	IniWrite, %vInitials%, %IniFileName%, Settings, Initials
-	
-	;Update the Preview
-	Gosub, UpdatePreview
-return
-	
-;Get Latest Version from GitHub
-GetLatestGithubTag(username, repo)
-{
-    ; Send a request to the GitHub API to get the latest release tag
-    url := "https://api.github.com/repos/" . username . "/" . repo . "/releases/latest"
-    whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-    whr.Open("GET", url, false)
-    whr.setRequestHeader("User-Agent", "AHK Script")
-    whr.Send()
-    response := whr.ResponseText
-    
-    ; Check response status
-    status := whr["Status"]
-    if (status != 200)
-    {
-		MsgBox Error: Status Code - %status%
+    Instead consider hiding to the system tray. This can be done on the main menu with "Hide to Tray" and will allow you to continue using the hotkey Ctrl+D.
+    )"
+    if MsgBox(txt, "Quit?", "YesNo Icon?") = "Yes" {
+        ExitApp()
+    }
+}
+
+GoToShowGUI(*) {
+    global Main
+    Main.Show()
+}
+
+TrayExit(*) {
+    ExitApp()
+}
+
+; ===== Change Initials (new feature) ===================================================================
+ChangeInitials(*) {
+    global vInitials, InitialsList
+
+    GuiCI := Gui("-SysMenu")
+    GuiCI.MarginX := 10, GuiCI.MarginY := 10
+    GuiCI.SetFont("s10 cWhite", "Arial")
+    GuiCI.BackColor := 0x1E1E1E
+    GuiCI.Title := "Change Initials"
+
+    GuiCI.AddText("w360", "Add a new initial, remove existing, or double-click to switch:")
+
+    NewEdit := GuiCI.AddEdit("w180 cBlack")
+    addBtn  := GuiCI.AddButton("x+m w90", "Add")
+    remBtn  := GuiCI.AddButton("x+m w120", "Remove Selected")
+    useBtn  := GuiCI.AddButton("w120", "Use Selected")
+    closeBtn:= GuiCI.AddButton("x+m w90", "Close"), closeBtn.OnEvent("Click", (*) => GuiCI.Destroy())
+
+    LV := GuiCI.AddListView("w360 r10 Grid", ["Initials"])
+    LV.SetFont("cBlack")
+    LV.ModifyCol(1, 320)
+
+    FillInitialsLV(LV)
+
+    LV.OnEvent("DoubleClick", (*) => (
+        (init := GetLVSelected(LV)) ? (SetActiveInitials(init), GuiCI.Destroy()) : 0
+    ))
+
+    addBtn.OnEvent("Click", (*) => (
+        val := Trim(NewEdit.Value)
+      , val := StrUpper(val)
+      , (val != "")
+        ? (AddInitials(val), NewEdit.Value := "", FillInitialsLV(LV))
+        : 0
+    ))
+
+    remBtn.OnEvent("Click", (*) => (
+        (init := GetLVSelected(LV))
+        ? (RemoveInitials(init), FillInitialsLV(LV))
+        : MsgBox("Select an initial to remove.", "No selection", "Icon!")
+    ))
+
+    useBtn.OnEvent("Click", (*) => (
+        (init := GetLVSelected(LV))
+        ? (SetActiveInitials(init), GuiCI.Destroy())
+        : MsgBox("Select an initial to use.", "No selection", "Icon!")
+    ))
+
+    GuiCI.Show()
+}
+
+GetLVSelected(lv) {
+    row := lv.GetNext()
+    return row ? lv.GetText(row, 1) : ""
+}
+
+FillInitialsLV(lv) {
+    lvCount := lv.GetCount()
+    while (lv.GetCount() > 0)
+        lv.Delete(1)
+    global InitialsList, vInitials
+    for _, init in InitialsList {
+        idx := lv.Add("", init)
+        if (init = vInitials)
+            lv.Modify(idx, "Select Focus")
+    }
+}
+
+AddInitials(init) {
+    global InitialsList
+    ; avoid duplicates
+    for _, v in InitialsList
+        if (v = init)
+            return
+    InitialsList.Push(init)
+    SaveInitialsList()
+    RebuildInitialsTrayMenu()
+}
+
+RemoveInitials(init) {
+    global InitialsList, vInitials
+    idx := 0
+    for i, v in InitialsList
+        if (v = init) {
+            idx := i
+            break
+        }
+    if (idx) {
+        InitialsList.RemoveAt(idx)
+        ; if we removed the active one, switch to first if any, else "()"
+        if (init = vInitials) {
+            newActive := InitialsList.Length ? InitialsList[1] : "()"
+            SetActiveInitials(newActive, false) ; false => don't rebuild list again (we will below)
+        } else {
+            SaveInitialsList()
+        }
+        RebuildInitialsTrayMenu()
+    }
+}
+
+SetActiveInitials(newInit, rebuild := true) {
+    global vInitials, IniFileName
+    vInitials := newInit
+    IniWrite(vInitials, IniFileName, "Settings", "Initials")      ; keep legacy key for compatibility
+    UpdatePreview()
+    if rebuild
+        RebuildInitialsTrayMenu()
+}
+
+LoadInitialsList() {
+    global IniFileName
+    raw := IniRead(IniFileName, "Settings", "InitialsList", "")
+    list := []
+    if (raw != "") {
+        for _, seg in StrSplit(raw, "|") {
+            seg := Trim(seg)
+            if (seg != "")
+                list.Push(seg)
+        }
+    } else {
+        ; fall back to single active initial if list missing
+        act := IniRead(IniFileName, "Settings", "Initials", "()")
+        list := [act]
+        IniWrite(act, IniFileName, "Settings", "InitialsList")
+    }
+    ; provide handy .Has() for membership checks
+    list.DefineProp("Has", {Call:(this, x) => (IndexOf(this, x) != 0)})
+    return list
+}
+
+IndexOf(arr, val) {
+    for i, v in arr
+        if (v = val)
+            return i
+    return 0
+}
+
+SaveInitialsList() {
+    global IniFileName, InitialsList, vInitials
+    ; ensure active is present
+    pres := false
+    for _, v in InitialsList {
+        if (v = vInitials) {
+            pres := true
+            break
+        }
+    }
+    if !pres
+        InitialsList.Push(vInitials)
+
+    IniWrite(StrJoin(InitialsList, "|"), IniFileName, "Settings", "InitialsList")
+}
+
+StrJoin(arr, delim := ",") {
+    out := ""
+    for i, v in arr
+        out .= (i>1 ? delim : "") . v
+    return out
+}
+
+RebuildInitialsTrayMenu() {
+    global InitialsMenuLabel, InitialsList, A_TrayMenu
+    ; remove old submenu if it exists
+    try A_TrayMenu.Delete(InitialsMenuLabel)
+    catch as err {
+        ; ignore if not present yet
+    }
+
+    sub := Menu()
+    ; each initials entry points to one common handler
+    for _, init in InitialsList
+        sub.Add(init, SwitchInitialsFromTray)
+
+    sub.Add("Change Initials...", ChangeInitials)
+    A_TrayMenu.Add(InitialsMenuLabel, sub)
+}
+
+; Menu callback: first param is the clicked item's label (the initials)
+SwitchInitialsFromTray(ItemName, ItemPos := "", MyMenu := "") {
+    if ItemName
+        SetActiveInitials(ItemName)
+}
+
+; ===== Date Format Picker (ListView tabs with examples) ===============================================
+EditDateTimeFormat(*) {
+    global vDateTimeFormat, IniFileName
+
+    FormatPicker := Gui("-SysMenu")
+    FormatPicker.MarginX := 10, FormatPicker.MarginY := 10
+    FormatPicker.SetFont("s10 cWhite", "Consolas")  ; white for labels; LV sets its own color
+    FormatPicker.BackColor := 0x1E1E1E
+    FormatPicker.Title := "Update Date Format"
+
+    FormatPicker.AddText("w360", "Example Date (for preview below):  January 2, 2003 (Thu)")
+
+    useBtn    := FormatPicker.AddButton("w120", "Use Selected")
+    cancelBtn := FormatPicker.AddButton("x+m w120", "Cancel")
+    cancelBtn.OnEvent("Click", (*) => FormatPicker.Destroy())
+
+    tab := FormatPicker.AddTab("vMyTab", ["No Weekday","Weekday Short","Weekday Long","Month Written","Full Dates"])
+    sampleDate := "20030102090000" ; Thu, Jan 2, 2003 @ 09:00
+
+    tabLVs := []  ; listviews per tab
+
+    tab.UseTab(1)
+    tabLVs.Push( MakeLV(FormatPicker, sampleDate, ["MM/yy","MM/dd","MM/yyyy","MM/dd/yy","MM/dd/yyyy","yyyy/MM/dd"]) )
+
+    tab.UseTab(2)
+    tabLVs.Push( MakeLV(FormatPicker, sampleDate, ["MM/dd ddd","MM/dd/yy ddd","MM/dd/yyyy ddd"]) )
+
+    tab.UseTab(3)
+    tabLVs.Push( MakeLV(FormatPicker, sampleDate, ["MM/dd dddd","MM/dd/yy dddd","MM/dd/yyyy dddd"]) )
+
+    tab.UseTab(4)
+    tabLVs.Push( MakeLV(FormatPicker, sampleDate, ["MMM dd.","MMM dd","MMMM dd","MMMM dd, yyyy"]) )
+
+    tab.UseTab(5)
+    tabLVs.Push( MakeLV(FormatPicker, sampleDate, ["dddd, MMMM dd, yyyy"]) )
+
+    tab.UseTab()
+
+    apply := (fmt) => (
+        vDateTimeFormat := fmt
+      , IniWrite(vDateTimeFormat, IniFileName, "Settings", "DateTimeFormat")
+      , UpdatePreview()
+      , FormatPicker.Destroy()
+    )
+
+    GetSelectedFmt := () => (
+        idx := tab.Value
+      , lv := tabLVs[idx]
+      , row := lv.GetNext()
+      , (row ? lv.GetText(row, 2) : "")
+    )
+
+    for _, lv in tabLVs
+        lv.OnEvent("DoubleClick", (*) => (
+            (fmt := GetSelectedFmt()) ? apply(fmt) : 0
+        ))
+
+    useBtn.OnEvent("Click", (*) => (
+        (fmt := GetSelectedFmt()) ? apply(fmt) : MsgBox("Please select a format first.", "No selection", "Icon!")
+    ))
+
+    FormatPicker.Show()
+}
+
+; helper to create & fill a LV with examples (black text on white)
+MakeLV(containerGui, sampleDate, fmts) {
+    lv := containerGui.AddListView("w360 r10 Grid", ["Example","Format"])
+    lv.SetFont("cBlack")
+    lv.ModifyCol(1, 220), lv.ModifyCol(2, 120)
+    for _, fmt in fmts {
+        ex := FormatTime(sampleDate, fmt)   ; (Time, Format)
+        lv.Add("", ex, fmt)
+    }
+    return lv
+}
+
+; ===== Reset & Preview =================================================================================
+ConfirmResetToDefault(*) {
+    if MsgBox("Are you sure you want to reset the settings to default? This action cannot be undone.", "Reset to Default", "YesNo Icon!") = "Yes" {
+        ResettoDefault()
+    }
+}
+
+ResettoDefault() {
+    global vDateTimeFormat, vInitials, IniFileName, InitialsList
+    vDateTimeFormat := "MM/dd/yy ddd"
+    IniWrite(vDateTimeFormat, IniFileName, "Settings", "DateTimeFormat")
+
+    ; reset initials to default "()"
+    vInitials := "()"
+    InitialsList := ["()"]
+    SaveInitialsList()
+    IniWrite(vInitials, IniFileName, "Settings", "Initials")
+    RebuildInitialsTrayMenu()
+    UpdatePreview()
+}
+
+UpdatePreview() {
+    global PreviewCtrl, vDateTimeFormat, vInitials
+    dt := FormatTime(, vDateTimeFormat)  ; (Time, Format)
+    PreviewCtrl.Text := dt . " " . vInitials . ": "
+}
+
+; ===== GitHub Tag Helper ==============================================================================
+GetLatestGithubTag(username, repo) {
+    try {
+        url := "https://api.github.com/repos/" username "/" repo "/releases/latest"
+        whr := ComObject("WinHttp.WinHttpRequest.5.1")
+        whr.Open("GET", url, false)
+        whr.SetRequestHeader("User-Agent", "AHK Script")
+        whr.Send()
+        if whr.Status != 200
+            return ""
+        response := whr.ResponseText
+        tagPattern := '"tag_name":\s*"(v?\d+\.\d+\.\d+)"'
+        if RegExMatch(response, tagPattern, &m)
+            return m[1]
+        return ""
+    } catch {
         return ""
     }
-    
-    ; Show the response for debugging
-    ; MsgBox %response%
-    
-    ; Parse the JSON response to get the tag_name
-    tagPattern := """tag_name"":\s*""(v?\d+\.\d+\.\d+)"""
-    
-    if (RegExMatch(response, tagPattern, match))
-    {
-        return match1 ; returns the version number
-    }
-    
-    ; Return empty if unable to fetch the tag (handle this gracefully in the main script)
-    return ""
 }
-	
-; ===== Called from Tray ==================================================================================================
-
-; Show GUI from tray function
-GoToShowGUI:
-	Gui,Main: Show
-return
-
-; Tray Exit
-TrayExit:
-	ExitApp
-return
-		
-; ===== Hotkey Pressed ==================================================================================================
-
-; Hotkey for sending the current date and time
-^d::
-
-	; Format the current date and time using the selected format
-	FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
-	
-	; Send the formatted date and time
-	Send, %vCurrentDateTimeFormat% %vInitials%: 
-	SendInput {Space}
-return 
-
-; ===== Update Preview ==================================================================================================
-
-UpdatePreview:
-	; Format the current date and time using the selected format
-	FormatTime, vCurrentDateTimeFormat,, %vDateTimeFormat%
-	
-	; Update the main GUI label with the new preview
-	GuiControl, Main: Text, Preview, %vCurrentDateTimeFormat% %vInitials%: 
-return 
